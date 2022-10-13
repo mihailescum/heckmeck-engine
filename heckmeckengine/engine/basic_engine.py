@@ -3,42 +3,42 @@ import logging
 
 from .engine import Engine
 from .search_tree import SearchTree
-from .evaluation import Evaluation
-from .move_sort import MoveSort
+from .evaluation import Evaluation, EvaluationTarget
+from .move_generator import MoveGenerator
 
 LOGGER = logging.getLogger("basic_engine")
 
 
 class BasicEngine(Engine):
-    def __init__(self, color: chess.Color):
+    def __init__(self, color: chess.Color, board: chess.Board):
         self.color = color
+        self.board = board
 
         self.evaluation = Evaluation()
-        self.move_sort = MoveSort()
+        self.move_generator = MoveGenerator(self.board)
         self.num_evaluations = 0
 
-    def play(self, board: chess.Board) -> chess.Move:
-        tree = SearchTree(max_depth=4, color=self.color)
+    def play(self) -> chess.Move:
+        tree = SearchTree(
+            max_depth=4,
+            color=self.color,
+            move_generator=self.move_generator,
+        )
         self.num_evaluations = 0
-
-        def get_child_values():
-            sorted_moves = self.move_sort.sort_moves(board.legal_moves, board)
-            return sorted_moves
 
         def feedback_up(move: chess.Move):
-            board.pop()
+            self.board.pop()
 
         def feedback_down(move: chess.Move):
-            board.push(move)
+            self.board.push(move)
 
-        def evaluation(depth):
+        def evaluation(target: EvaluationTarget):
             self.num_evaluations += 1
-            evaluation = self.evaluation.get_eval(board, depth)
+            evaluation = self.evaluation.get_eval(self.board, target)
             return evaluation
 
         result = tree.traverse_tree(
             evaluation,
-            get_child_values,
             feedback_up,
             feedback_down,
         )

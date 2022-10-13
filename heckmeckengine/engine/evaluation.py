@@ -1,7 +1,13 @@
 import chess
 import numpy as np
+from enum import Enum
 
 from typing import Optional
+
+
+class EvaluationTarget(Enum):
+    COMPLETE = 1
+    FAST = 2
 
 
 class Evaluation:
@@ -112,23 +118,30 @@ class Evaluation:
             chess.KING: self._king_map.flatten(),
         }
 
-    def get_eval(self, board: chess.Board, depth: int) -> float:
+    def get_eval(
+        self,
+        board: chess.Board,
+        target: EvaluationTarget,
+    ) -> float:
         outcome = board.outcome()
         if outcome is not None:  # Game finished
             if outcome.result() == "1-0":
-                return self._mate_value - depth
+                return self._mate_value
             elif outcome.result() == "0-1":
-                return -(self._mate_value - depth)
+                return -(self._mate_value)
             elif outcome.result() == "1/2-1/2":
                 return 0.0
             else:
                 raise ValueError()
 
+        evaluation = 0
         piece_evaluation = self._piece_evaluation(board)
-        position_evaluation = self._position_evaluation(board)
+        evaluation += piece_evaluation
 
-        eval = piece_evaluation + position_evaluation
-        return eval
+        if target == EvaluationTarget.COMPLETE:
+            position_evaluation = self._position_evaluation(board)
+            evaluation += position_evaluation
+        return evaluation
 
     def _position_evaluation(
         self,

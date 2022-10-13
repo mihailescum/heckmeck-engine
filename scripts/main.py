@@ -13,11 +13,8 @@ def main() -> None:
     if usercolor is None:
         usercolor = chess.Color(bool(random.randrange(2)))
 
-    engine = BasicEngine(not usercolor)
-    # game = Game(engine=engine)
     game = Game(
-        engine=engine,
-        fen="1q2b1k1/1r3ppp/8/1n6/8/N7/1R2BPPP/1Q4K1 w - - 0 1",
+        # fen="1q2b1k1/1r3ppp/8/1n6/8/N7/1R2BPPP/1Q4K1 w - - 0 1",
     )
 
     usercolor = game.start(usercolor)

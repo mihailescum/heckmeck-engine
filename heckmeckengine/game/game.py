@@ -3,19 +3,22 @@ import chess
 from typing import Optional
 
 from heckmeckengine.engine import Engine
+from heckmeckengine.engine.basic_engine import BasicEngine
 
 
 class Game:
-    def __init__(self, engine: Engine, fen: Optional[str] = chess.STARTING_FEN):
+    def __init__(self, fen: Optional[str] = chess.STARTING_FEN):
         self.board = chess.Board(fen)
-        self.engine = engine
 
+        self.engine = None
         self.white_halfmove = None
         self.black_halfmove = None
 
         self.started = False
 
     def start(self, usercolor) -> None:
+        self.engine = BasicEngine(not usercolor, self.board)
+
         if usercolor == chess.WHITE:
             self.white_halfmove = self._user_halfmove
             self.black_halfmove = self._engine_halfmove
@@ -45,7 +48,7 @@ class Game:
                 break
 
     def _engine_halfmove(self):
-        result = self.engine.play(self.board)
+        result = self.engine.play()
         self.board.push(result)
         print(f"Engine played the move {result.uci()}.")
 
