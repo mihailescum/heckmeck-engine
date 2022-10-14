@@ -1,6 +1,7 @@
 import chess
 import logging
 
+from .annotated_move import AnnotatedMove
 from .engine import Engine
 from .search_tree import SearchTree
 from .evaluation import Evaluation, EvaluationTarget
@@ -20,16 +21,16 @@ class BasicEngine(Engine):
 
     def play(self) -> chess.Move:
         tree = SearchTree(
-            max_depth=4,
+            max_depth=6,
             color=self.color,
             move_generator=self.move_generator,
         )
         self.num_evaluations = 0
 
-        def feedback_up(move: chess.Move):
+        def feedback_up(move: AnnotatedMove):
             self.board.pop()
 
-        def feedback_down(move: chess.Move):
+        def feedback_down(move: AnnotatedMove):
             self.board.push(move)
 
         def evaluation(target: EvaluationTarget):
@@ -43,4 +44,5 @@ class BasicEngine(Engine):
             feedback_down,
         )
         LOGGER.debug(f"Number of evaluations: {self.num_evaluations}")
+        self.board.push(result)
         return result

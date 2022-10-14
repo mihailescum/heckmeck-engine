@@ -4,6 +4,8 @@ from enum import Enum
 
 from typing import Optional
 
+from .score import Score
+
 
 class EvaluationTarget(Enum):
     COMPLETE = 1
@@ -122,17 +124,16 @@ class Evaluation:
         self,
         board: chess.Board,
         target: EvaluationTarget,
-    ) -> float:
+    ) -> Score:
         outcome = board.outcome()
         if outcome is not None:  # Game finished
-            if outcome.result() == "1-0":
-                return self._mate_value
-            elif outcome.result() == "0-1":
-                return -(self._mate_value)
-            elif outcome.result() == "1/2-1/2":
-                return 0.0
+            if outcome.termination == chess.Termination.CHECKMATE:
+                if outcome.winner == chess.WHITE:
+                    return Score(np.inf, outcome.termination)
+                else:
+                    return Score(-np.inf, outcome.termination)
             else:
-                raise ValueError()
+                return Score(0.0, outcome.termination)
 
         evaluation = 0
         piece_evaluation = self._piece_evaluation(board)
@@ -141,7 +142,9 @@ class Evaluation:
         if target == EvaluationTarget.COMPLETE:
             position_evaluation = self._position_evaluation(board)
             evaluation += position_evaluation
-        return evaluation
+
+        score = Score(evaluation)
+        return score
 
     def _position_evaluation(
         self,

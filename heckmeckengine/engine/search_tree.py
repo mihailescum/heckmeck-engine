@@ -9,6 +9,8 @@ from typing import Iterable, Union
 from .evaluation import EvaluationTarget
 from .search_node import SearchNode
 from .move_generator import MoveGenerator
+from .score import Score
+from .annotated_move import AnnotatedMove
 
 LOGGER = logging.getLogger("search_tree")
 
@@ -22,17 +24,15 @@ class SearchTree:
         start_depth: int = 2,
     ):
         self.move_generator = move_generator
-        self.current_depth = start_depth
+        self.current_depth = max_depth
         self.max_depth = max_depth
 
         self.root = SearchNode(
-            parent=None,
-            value=None,
             move_generator=self.move_generator,
             max_depth=0,
             iteration=-1,
-            alpha=-np.inf,
-            beta=np.inf,
+            alpha=Score(-np.inf),
+            beta=Score(np.inf),
             sign=1 if color == chess.WHITE else -1,
         )
 
@@ -43,22 +43,12 @@ class SearchTree:
         feedback_up,
         feedback_down,
     ) -> float:
-        # if current_node.max_depth == self.max_depth - 1:
-        #    evaluation = current_node.color * eval_function(
-        #        depth, EvaluationTarget.FAST
-        #    )
-        #    current_node.quiescence_score = evaluation
-
         if current_node.max_depth == 0:
             evaluation = current_node.sign * eval_function(EvaluationTarget.COMPLETE)
             current_node.score = evaluation
-            # current_node.quiescence_score = evaluation
-            # parent_quiescence_score = current_node.parent.quiescence_score
-
-            # if abs(evaluation - parent_quiescence_score) < self._quiescence_threshold:
             return evaluation
 
-        value = -np.inf
+        value = None
         for child_node in current_node:
             feedback_down(child_node.value)
             child_score = -self._alpha_beta_search(
@@ -67,17 +57,23 @@ class SearchTree:
                 feedback_up,
                 feedback_down,
             )
+            child_node.score = child_score
             feedback_up(child_node.value)
 
-            if child_score > value:
+            if value is None or child_score > value:
                 current_node.optimizing_node = child_node
                 value = child_score
 
-            current_node.alpha = max(current_node.alpha, value)
-            if current_node.alpha >= current_node.beta:  # beta cutoff
-                break
+                if value > current_node.alpha:
+                    current_node.alpha = value
 
-        if value == -np.inf:  # Terminal node
+                    if current_node.alpha >= current_node.beta:  # beta cutoff
+                        move = child_node.value
+                        if move.is_quiet:  # Found a new killer move
+                            self.move_generator.add_killer_move(move)
+                        break
+
+        if value is None:  # Terminal node
             evaluation = current_node.sign * eval_function(EvaluationTarget.COMPLETE)
             current_node.score = evaluation
             return evaluation
@@ -87,15 +83,17 @@ class SearchTree:
 
     def start_iteration(self):
         self.root.max_depth = self.current_depth
+        self.root.alpha = Score(-np.inf)
+        self.root.beta = Score(np.inf)
 
     def traverse_tree(
         self,
         eval_function,
         feedback_up,
         feedback_down,
-    ) -> chess.Move:
+    ) -> AnnotatedMove:
         evaluation = None
-        while self.current_depth < self.max_depth:
+        while self.current_depth <= self.max_depth:
             self.start_iteration()
             evaluation = self._alpha_beta_search(
                 self.root,
@@ -105,4 +103,8 @@ class SearchTree:
             )
             self.current_depth += 1
         LOGGER.debug(f"Evaluation: {evaluation}")
+        node = self.root
+        while node.optimizing_node is not None:
+            LOGGER.debug(node.optimizing_node.value)
+            node = node.optimizing_node
         return self.root.optimizing_node.value

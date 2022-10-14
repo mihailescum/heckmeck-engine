@@ -17,7 +17,7 @@ class Game:
         self.started = False
 
     def start(self, usercolor) -> None:
-        self.engine = BasicEngine(not usercolor, self.board)
+        self.engine = BasicEngine(not usercolor, self.board.copy())
 
         if usercolor == chess.WHITE:
             self.white_halfmove = self._user_halfmove
@@ -45,12 +45,13 @@ class Game:
                 continue
             else:
                 self.board.push(move)
+                self.engine.board.push(move)
                 break
 
     def _engine_halfmove(self):
         result = self.engine.play()
+        print(f"Engine played the move {self.board.san(result)}.")
         self.board.push(result)
-        print(f"Engine played the move {result.uci()}.")
 
     def do_move(self) -> None:
         if not self.started:

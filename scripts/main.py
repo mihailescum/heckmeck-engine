@@ -14,7 +14,7 @@ def main() -> None:
         usercolor = chess.Color(bool(random.randrange(2)))
 
     game = Game(
-        # fen="1q2b1k1/1r3ppp/8/1n6/8/N7/1R2BPPP/1Q4K1 w - - 0 1",
+        fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
     )
 
     usercolor = game.start(usercolor)

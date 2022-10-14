@@ -1,41 +1,31 @@
 from __future__ import annotations
+from dataclasses import dataclass, field
 
 import chess
-from typing import Generator
+from typing import Optional, Dict
 
 from .move_generator import MoveGenerator
 from .search_flag import SearchFlag
+from .score import Score
+from .annotated_move import AnnotatedMove
 
 
+@dataclass()
 class SearchNode:
-    def __init__(
-        self,
-        parent: SearchNode,
-        value: chess.Move,
-        move_generator: MoveGenerator,
-        sign: int,
-        iteration: int,
-        max_depth: int,
-        alpha: float,
-        beta: float,
-    ):
-        self.parent = parent
-        self.move_generator = move_generator
-        self.value = value
-        self.sign = sign
+    move_generator: MoveGenerator
+    sign: int
+    iteration: int
+    max_depth: int
+    alpha: Score
+    beta: Score
+    parent: Optional[SearchNode] = None
+    value: Optional[AnnotatedMove] = None
 
-        self.iteration = iteration
-        self.max_depth = max_depth
+    optimizing_node: SearchNode = field(default=None, init=False)
+    children: Dict[AnnotatedMove, SearchNode] = field(default_factory=dict, init=False)
+    current_move: int = field(default=0, init=False)
 
-        self.alpha = alpha
-        self.beta = beta
-
-        self.score = None
-        self.optimizing_node = None
-
-        self.current_child = 0
-        self.legal_moves = None
-        self.children = {}
+    score: Score = field(default=None, init=False)
 
     def __str__(self):
         return str(self.value)
@@ -44,18 +34,20 @@ class SearchNode:
         return str(self)
 
     def __iter__(self):
-        if self.legal_moves is None:
-            self.legal_moves = self.move_generator.generate_moves()
+        pv_move = None
+        if self.optimizing_node is not None:
+            pv_move = self.optimizing_node.value
+        self.sorted_moves = self.move_generator.generate_moves(pv_move)
 
         if self.parent is None or self.iteration < self.parent.iteration:
-            self.current_child = 0
+            self.current_move = 0
             self.iteration += 1
 
         return self
 
     def __next__(self):
-        if self.current_child < len(self.legal_moves):
-            move = self.legal_moves[self.current_child]
+        if self.current_move < len(self.sorted_moves):
+            move = self.sorted_moves[self.current_move]
             if move in self.children:
                 child = self.children[move]
                 child.max_depth = self.max_depth - 1
@@ -74,7 +66,7 @@ class SearchNode:
                 )
                 self.children[move] = child
 
-            self.current_child += 1
+            self.current_move += 1
             return child
         else:
             raise StopIteration
