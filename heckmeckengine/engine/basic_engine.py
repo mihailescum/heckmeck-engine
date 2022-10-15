@@ -11,18 +11,27 @@ LOGGER = logging.getLogger("basic_engine")
 
 
 class BasicEngine(Engine):
-    def __init__(self, color: chess.Color, board: chess.Board):
-        self.color = color
-        self.board = board
+    def ucinewgame(self):
+        super().ucinewgame()
 
         self.evaluation = Evaluation()
         self.move_generator = MoveGenerator(self.board)
         self.num_evaluations = 0
 
-    def play(self) -> chess.Move:
+    @property
+    def name(self):
+        return "Heckmeck Basic"
+
+    @property
+    def author(self):
+        return "Max Mihailescu"
+
+    def play(self, iteration_callback=None) -> chess.Move:
+        self.game_started = True
+        color = self.board.turn
         tree = SearchTree(
-            max_depth=6,
-            color=self.color,
+            max_depth=4,
+            color=color,
             move_generator=self.move_generator,
         )
         self.num_evaluations = 0
@@ -42,6 +51,7 @@ class BasicEngine(Engine):
             evaluation,
             feedback_up,
             feedback_down,
+            iteration_callback,
         )
         LOGGER.debug(f"Number of evaluations: {self.num_evaluations}")
         self.board.push(result)

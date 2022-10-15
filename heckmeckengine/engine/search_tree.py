@@ -24,7 +24,7 @@ class SearchTree:
         start_depth: int = 2,
     ):
         self.move_generator = move_generator
-        self.current_depth = max_depth
+        self._current_depth = start_depth
         self.max_depth = max_depth
 
         self.root = SearchNode(
@@ -81,27 +81,71 @@ class SearchTree:
         current_node.score = value
         return value
 
-    def start_iteration(self):
-        self.root.max_depth = self.current_depth
+    def _mtdf(self, f, eval_function, feedback_up, feedback_down):
+        g = f
+        upperbound = np.inf
+        lowerbound = -np.inf
+        while lowerbound < upperbound:
+            if g == lowerbound:
+                beta = g + 1
+            else:
+                beta = g
+
+            self.root.alpha = beta - 1
+            self.root.beta = beta
+            g = self._alpha_beta_search(
+                self.root,
+                eval_function,
+                feedback_up,
+                feedback_down,
+            )  # TODO: Add memory to alpha beta
+
+            if g < beta:
+                upperbound = g
+            else:
+                lowerbound = g
+        return g
+
+    def _start_deepening_iteration(self):
+        self.root.max_depth = self._current_depth
         self.root.alpha = Score(-np.inf)
         self.root.beta = Score(np.inf)
 
-    def traverse_tree(
-        self,
-        eval_function,
-        feedback_up,
-        feedback_down,
-    ) -> AnnotatedMove:
+    def _iterative_deepening(
+        self, eval_function, feedback_up, feedback_down, iteration_callback
+    ):
         evaluation = None
-        while self.current_depth <= self.max_depth:
-            self.start_iteration()
+        while self._current_depth <= self.max_depth:
+            # self._start_deepening_iteration()
+            self.root.max_depth = self._current_depth
             evaluation = self._alpha_beta_search(
                 self.root,
                 eval_function,
                 feedback_up,
                 feedback_down,
             )
-            self.current_depth += 1
+            if iteration_callback is not None:
+                stop_iteration = iteration_callback(self._current_depth)
+                if stop_iteration:
+                    break
+
+            self._current_depth += 1
+        return evaluation
+
+    def traverse_tree(
+        self,
+        eval_function,
+        feedback_up,
+        feedback_down,
+        iteration_callback=None,
+    ) -> AnnotatedMove:
+        evaluation = self._iterative_deepening(
+            eval_function,
+            feedback_up,
+            feedback_down,
+            iteration_callback,
+        )
+
         LOGGER.debug(f"Evaluation: {evaluation}")
         node = self.root
         while node.optimizing_node is not None:
