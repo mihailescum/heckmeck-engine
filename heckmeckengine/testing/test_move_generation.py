@@ -1,7 +1,9 @@
 import pytest
 
 import chess
-from heckmeckengine.engine.move_generator import MoveGenerator
+import numpy as np
+
+from heckmeckengine.engine import HeckmeckBoard, AnnotatedMove
 
 import time
 import logging
@@ -12,7 +14,7 @@ perft_positions = [
     {
         "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         "skip": False,
-        "depth": 4,
+        "depth": 5,
         "nodes": [20, 400, 8902, 197281, 4865609, 119060324],
         "captures": [0, 0, 34, 1576, 82719, 2812008],
         "ep": [0, 0, 0, 0, 258, 319617],
@@ -24,7 +26,7 @@ perft_positions = [
     {
         "fen": "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -",
         "skip": False,
-        "depth": 3,
+        "depth": 4,
         "nodes": [48, 2039, 97862, 4085603, 193690690, 8031647685],
         "captures": [8, 351, 17102, 757163, 35043416, 1558445089],
         "ep": [0, 1, 45, 1929, 73365, 3577504],
@@ -35,8 +37,8 @@ perft_positions = [
     },
     {
         "fen": "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -",
-        "skip": True,
-        "depth": 1,
+        "skip": False,
+        "depth": 5,
         "nodes": [14, 191, 2812, 43238, 674624, 11030083],
         "captures": [1, 14, 209, 3348, 52051, 940350],
         "ep": [0, 0, 2, 123, 1165, 33325],
@@ -47,8 +49,8 @@ perft_positions = [
     },
     {
         "fen": "r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1",
-        "skip": True,
-        "depth": 1,
+        "skip": False,
+        "depth": 4,
         "nodes": [6, 264, 9467, 422333, 15833292],
         "captures": [0, 87, 1021, 131393, 2046173],
         "ep": [0, 0, 4, 0, 6521],
@@ -65,26 +67,38 @@ perft_positions = [
     },
     {
         "fen": "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10",
-        "skip": True,
-        "depth": 1,
+        "skip": False,
+        "depth": 3,
         "nodes": [46, 2079, 89890, 3894594, 164075551],
     },
 ]
 
 
-def perft(move_generator, depth, fast=True):
+def perft(
+    move: AnnotatedMove,
+    board: HeckmeckBoard,
+    result: np.ndarray,
+    depth: int,
+    fast: bool = True,
+) -> None:
     if fast:
-        moves = move_generator.generate_moves(pv_move=None)
+        moves = board.generate_legal_moves(pv_move=None, generate_null_move=False)
         if depth == 1:
-            return len(moves)
+            result += np.array([len(list(moves)), 0, 0, 0, 0, 0, 0])
+            return
+    else:
+        if depth == 0:
+            if move:
+                result[0] += 1
+                if move.is_capture:
+                    result[1] += 1
+            return
+        moves = board.generate_legal_moves(pv_move=None, generate_null_move=False)
 
-        nodes = 0
-        for move in moves:
-            move_generator.board.push(move)
-            nodes += perft(move_generator, depth - 1, fast=fast)
-            move_generator.board.pop()
-
-        return nodes
+    for move in moves:
+        board.push(move)
+        perft(move, board, result, depth - 1, fast=fast)
+        board.pop()
 
 
 @pytest.mark.parametrize("position", perft_positions)
@@ -96,14 +110,14 @@ def test_generate_move(position, fast):
     fen = position["fen"]
     depth = position["depth"]
 
-    board = chess.Board(fen=fen)
-    move_generator = MoveGenerator(board)
+    board = HeckmeckBoard(fen=fen)
 
     start = time.time()
-    result = perft(move_generator, depth=depth, fast=fast)
+    result = np.zeros(7)
+    perft(None, board, result, depth=depth, fast=fast)
     duration = time.time() - start
 
-    nodes = result["nodes"] if isinstance(result, dict) else result
+    nodes = result[0]
 
     nodes_per_second = nodes / duration
     logging.info(

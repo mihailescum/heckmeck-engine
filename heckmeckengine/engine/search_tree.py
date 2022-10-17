@@ -6,11 +6,11 @@ import logging
 from typing import Iterable, Union
 
 
-from .evaluation import EvaluationTarget
-from .search_node import SearchNode
-from .move_generator import MoveGenerator
-from .score import Score
-from .annotated_move import AnnotatedMove
+from heckmeckengine.engine.evaluation import EvaluationTarget
+from heckmeckengine.engine.search_node import SearchNode
+from heckmeckengine.engine.heckmeck_board import HeckmeckBoard
+from heckmeckengine.engine.score import Score
+from heckmeckengine.engine.annotated_move import AnnotatedMove
 
 LOGGER = logging.getLogger("search_tree")
 

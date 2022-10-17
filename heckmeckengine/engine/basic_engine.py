@@ -1,11 +1,11 @@
 import chess
 import logging
 
-from .annotated_move import AnnotatedMove
-from .engine import Engine
-from .search_tree import SearchTree
-from .evaluation import Evaluation, EvaluationTarget
-from .move_generator import MoveGenerator
+from heckmeckengine.engine.annotated_move import AnnotatedMove
+from heckmeckengine.engine.engine import Engine
+from heckmeckengine.engine.search_tree import SearchTree
+from heckmeckengine.engine.evaluation import Evaluation, EvaluationTarget
+from heckmeckengine.engine.heckmeck_board import HeckmeckBoard
 
 LOGGER = logging.getLogger("basic_engine")
 
@@ -15,7 +15,6 @@ class BasicEngine(Engine):
         super().ucinewgame()
 
         self.evaluation = Evaluation()
-        self.move_generator = MoveGenerator(self.board)
         self.num_evaluations = 0
 
     @property

@@ -4,15 +4,15 @@ from dataclasses import dataclass, field
 import chess
 from typing import Optional, Dict
 
-from .move_generator import MoveGenerator
-from .search_flag import SearchFlag
-from .score import Score
-from .annotated_move import AnnotatedMove
+from heckmeckengine.engine.heckmeck_board import HeckmeckBoard
+from heckmeckengine.engine.search_flag import SearchFlag
+from heckmeckengine.engine.score import Score
+from heckmeckengine.engine.annotated_move import AnnotatedMove
 
 
 @dataclass()
 class SearchNode:
-    move_generator: MoveGenerator
+    move_generator: HeckmeckBoard
     sign: int
     iteration: int
     max_depth: int

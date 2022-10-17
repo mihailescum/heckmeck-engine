@@ -4,7 +4,8 @@ from enum import Enum
 
 from typing import Optional
 
-from .score import Score
+from heckmeckengine.engine.score import Score
+from heckmeckengine.engine.heckmeck_board import HeckmeckBoard
 
 
 class EvaluationTarget(Enum):
@@ -122,7 +123,7 @@ class Evaluation:
 
     def get_eval(
         self,
-        board: chess.Board,
+        board: HeckmeckBoard,
         target: EvaluationTarget,
     ) -> Score:
         outcome = board.outcome()
@@ -148,7 +149,7 @@ class Evaluation:
 
     def _position_evaluation(
         self,
-        board: chess.Board,
+        board: HeckmeckBoard,
         color: Optional[chess.Color] = None,
     ):
         if color is None:
@@ -166,7 +167,7 @@ class Evaluation:
 
     def _piece_evaluation(
         self,
-        board: chess.Board,
+        board: HeckmeckBoard,
         color: Optional[chess.Color] = None,
     ) -> float:
         if color is None:

@@ -1,7 +1,7 @@
 import chess
 import random
 
-from .engine import Engine
+from heckmeckengine.engine.engine import Engine
 
 
 class RandomEngine(Engine):
