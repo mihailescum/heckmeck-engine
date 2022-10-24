@@ -14,7 +14,9 @@ class EvaluationTarget(Enum):
 
 
 class Evaluation:
-    def __init__(self):
+    def __init__(self, board: chess.Board):
+        self.board = board
+
         self.piece_worth = {
             chess.KING: 0,
             chess.PAWN: 1,
@@ -23,6 +25,8 @@ class Evaluation:
             chess.ROOK: 5,
             chess.QUEEN: 9,
         }
+        self.counter = 0
+
         self._mate_value = 100000
 
         self._pawn_map = 0.3 * np.array(
@@ -121,12 +125,13 @@ class Evaluation:
             chess.KING: self._king_map.flatten(),
         }
 
-    def get_eval(
+    def get(
         self,
-        board: HeckmeckBoard,
         target: EvaluationTarget,
     ) -> Score:
-        outcome = board.outcome()
+        self.counter += 1
+
+        outcome = self.board.outcome()
         if outcome is not None:  # Game finished
             if outcome.termination == chess.Termination.CHECKMATE:
                 if outcome.winner == chess.WHITE:
@@ -137,25 +142,25 @@ class Evaluation:
                 return Score(0.0, outcome.termination)
 
         evaluation = 0
-        piece_evaluation = self._piece_evaluation(board)
+        piece_evaluation = self._piece_evaluation(self.board)
         evaluation += piece_evaluation
 
         if target == EvaluationTarget.COMPLETE:
-            position_evaluation = self._position_evaluation(board)
+            position_evaluation = self._position_evaluation(self.board)
             evaluation += position_evaluation
 
         score = Score(evaluation)
         return score
 
-    def _position_evaluation(
+    def _piece_evaluation(
         self,
         board: HeckmeckBoard,
         color: Optional[chess.Color] = None,
     ):
         if color is None:
-            white_eval = self._position_evaluation(board, chess.WHITE)
-            black_eval = self._position_evaluation(board, chess.BLACK)
-            eval = white_eval - black_eval
+            our_eval = self._piece_evaluation(board, self.board.turn)
+            opponent_eval = self._piece_evaluation(board, not self.board.turn)
+            eval = our_eval - opponent_eval
             return eval
         else:
             eval = 0
@@ -165,15 +170,15 @@ class Evaluation:
 
             return eval
 
-    def _piece_evaluation(
+    def _position_evaluation(
         self,
         board: HeckmeckBoard,
         color: Optional[chess.Color] = None,
     ) -> float:
         if color is None:
-            white_eval = self._piece_evaluation(board, chess.WHITE)
-            black_eval = self._piece_evaluation(board, chess.BLACK)
-            eval = white_eval - black_eval
+            our_eval = self._position_evaluation(board, self.board.turn)
+            opponent_eval = self._position_evaluation(board, not self.board.turn)
+            eval = our_eval - opponent_eval
             return eval
         else:
             position_map = (
@@ -185,3 +190,6 @@ class Evaluation:
                 eval += 0.1 * position_map[piece_type][list(positions)].sum()
 
             return eval
+
+    def reset_counter(self):
+        self.counter = 0

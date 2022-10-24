@@ -5,14 +5,13 @@ import chess
 from typing import Optional, Dict
 
 from heckmeckengine.engine.heckmeck_board import HeckmeckBoard
-from heckmeckengine.engine.search_flag import SearchFlag
 from heckmeckengine.engine.score import Score
 from heckmeckengine.engine.annotated_move import AnnotatedMove
 
 
 @dataclass()
 class SearchNode:
-    move_generator: HeckmeckBoard
+    board: HeckmeckBoard
     sign: int
     iteration: int
     max_depth: int
@@ -37,7 +36,7 @@ class SearchNode:
         pv_move = None
         if self.optimizing_node is not None:
             pv_move = self.optimizing_node.value
-        self.sorted_moves = self.move_generator.generate_moves(pv_move)
+        self.sorted_moves = self.board.generate_legal_moves(pv_move=pv_move)
 
         if self.parent is None or self.iteration < self.parent.iteration:
             self.current_move = 0
@@ -46,8 +45,7 @@ class SearchNode:
         return self
 
     def __next__(self):
-        if self.current_move < len(self.sorted_moves):
-            move = self.sorted_moves[self.current_move]
+        for move in self.sorted_moves:
             if move in self.children:
                 child = self.children[move]
                 child.max_depth = self.max_depth - 1
@@ -57,7 +55,7 @@ class SearchNode:
                 child = SearchNode(
                     parent=self,
                     value=move,
-                    move_generator=self.move_generator,
+                    board=self.board,
                     iteration=self.iteration,
                     max_depth=self.max_depth - 1,
                     alpha=-self.beta,

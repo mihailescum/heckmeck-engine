@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 import chess
+import math
 
 from typing import Optional
+
+import logging
 
 
 @dataclass
@@ -16,7 +19,10 @@ class Score:
         return Score(-self.value, self.termination)
 
     def __eq__(self, other):
-        return self.value == other.value and self.termination == other.termination
+        return (
+            math.isclose(self.value, other.value)
+            and self.termination == other.termination
+        )
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -29,8 +35,8 @@ class Score:
                 return self.value < other.value
             elif other.termination is chess.Termination.CHECKMATE:
                 return other.value > 0  # If other.value > 0, opponent has checkmate
-            else:
-                raise NotImplementedError
+            else:  # other is draw
+                return self.value < 0
         elif self.termination is chess.Termination.CHECKMATE:
             if isinstance(other, (float, int)) or other.termination is None:
                 return self.value < 0  # If self.value is < 0, opponent has checkmate
@@ -39,8 +45,15 @@ class Score:
                     return False
                 else:
                     return True
-        else:
-            raise NotImplementedError()
+            else:  # other is draw
+                return self.value < 0
+        else:  # We say it's a draw
+            if isinstance(other, (float, int)) or other.termination is None:
+                return other.value > 0
+            elif other.termination is chess.Termination.CHECKMATE:
+                return other.value > 0  # If other.value > 0, opponent has checkmate
+            else:  # other is draw
+                return False
 
     def __gt__(self, other):
         return not self.__lt__(other)

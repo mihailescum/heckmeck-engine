@@ -6,11 +6,11 @@ import logging
 from typing import Iterable, Union
 
 
-from heckmeckengine.engine.evaluation import EvaluationTarget
+from heckmeckengine.engine.evaluation import Evaluation, EvaluationTarget
 from heckmeckengine.engine.search_node import SearchNode
-from heckmeckengine.engine.heckmeck_board import HeckmeckBoard
 from heckmeckengine.engine.score import Score
 from heckmeckengine.engine.annotated_move import AnnotatedMove
+from heckmeckengine.engine.heckmeck_board import HeckmeckBoard
 
 LOGGER = logging.getLogger("search_tree")
 
@@ -19,16 +19,18 @@ class SearchTree:
     def __init__(
         self,
         color: chess.Color,
-        move_generator: MoveGenerator,
+        board: HeckmeckBoard,
+        evaluation: Evaluation,
         max_depth: int,
         start_depth: int = 2,
     ):
-        self.move_generator = move_generator
+        self.board = board
+        self.evaluation = evaluation
         self._current_depth = start_depth
         self.max_depth = max_depth
 
         self.root = SearchNode(
-            move_generator=self.move_generator,
+            board=self.board,
             max_depth=0,
             iteration=-1,
             alpha=Score(-np.inf),
@@ -36,29 +38,20 @@ class SearchTree:
             sign=1 if color == chess.WHITE else -1,
         )
 
-    def _alpha_beta_search(
-        self,
-        current_node: SearchNode,
-        eval_function,
-        feedback_up,
-        feedback_down,
-    ) -> float:
+    def _alpha_beta_search(self, current_node: SearchNode) -> float:
         if current_node.max_depth == 0:
-            evaluation = current_node.sign * eval_function(EvaluationTarget.COMPLETE)
+            evaluation = current_node.sign * self.evaluation.get(
+                EvaluationTarget.COMPLETE,
+            )
             current_node.score = evaluation
             return evaluation
 
         value = None
         for child_node in current_node:
-            feedback_down(child_node.value)
-            child_score = -self._alpha_beta_search(
-                child_node,
-                eval_function,
-                feedback_up,
-                feedback_down,
-            )
+            self.board.push(child_node.value)
+            child_score = -self._alpha_beta_search(child_node)
             child_node.score = child_score
-            feedback_up(child_node.value)
+            self.board.pop()
 
             if value is None or child_score > value:
                 current_node.optimizing_node = child_node
@@ -69,12 +62,14 @@ class SearchTree:
 
                     if current_node.alpha >= current_node.beta:  # beta cutoff
                         move = child_node.value
-                        if move.is_quiet:  # Found a new killer move
-                            self.move_generator.add_killer_move(move)
+                        # if move.is_quiet:  # Found a new killer move
+                        #    self.move_generator.add_killer_move(move)
                         break
 
         if value is None:  # Terminal node
-            evaluation = current_node.sign * eval_function(EvaluationTarget.COMPLETE)
+            evaluation = current_node.sign * self.evaluation.get(
+                EvaluationTarget.COMPLETE,
+            )
             current_node.score = evaluation
             return evaluation
 
@@ -111,19 +106,12 @@ class SearchTree:
         self.root.alpha = Score(-np.inf)
         self.root.beta = Score(np.inf)
 
-    def _iterative_deepening(
-        self, eval_function, feedback_up, feedback_down, iteration_callback
-    ):
+    def _iterative_deepening(self, iteration_callback):
         evaluation = None
         while self._current_depth <= self.max_depth:
             # self._start_deepening_iteration()
             self.root.max_depth = self._current_depth
-            evaluation = self._alpha_beta_search(
-                self.root,
-                eval_function,
-                feedback_up,
-                feedback_down,
-            )
+            evaluation = self._alpha_beta_search(self.root)
             if iteration_callback is not None:
                 stop_iteration = iteration_callback(self._current_depth)
                 if stop_iteration:
@@ -134,17 +122,9 @@ class SearchTree:
 
     def traverse_tree(
         self,
-        eval_function,
-        feedback_up,
-        feedback_down,
         iteration_callback=None,
     ) -> AnnotatedMove:
-        evaluation = self._iterative_deepening(
-            eval_function,
-            feedback_up,
-            feedback_down,
-            iteration_callback,
-        )
+        evaluation = self._iterative_deepening(iteration_callback)
 
         LOGGER.debug(f"Evaluation: {evaluation}")
         node = self.root

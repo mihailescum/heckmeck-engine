@@ -84,8 +84,6 @@ def run_engine(connection):
     newgame = True
     while not quit:
         command = connection.recv()
-        logging.debug("recieved: " + command)
-
         if command.startswith("debug"):
             pass
         elif command.startswith("ucinewgame"):
@@ -102,6 +100,7 @@ def run_engine(connection):
         elif command.startswith("register"):
             pass
         elif command.startswith("position"):
+            logging.debug(command)
             if newgame:
                 ucinewgame(engine)
 

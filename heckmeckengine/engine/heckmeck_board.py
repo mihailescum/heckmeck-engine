@@ -1,10 +1,7 @@
 import chess
-import numpy as np
 
-from typing import Iterator, List, Optional
+from typing import Iterator, Optional
 from heckmeckengine.engine.annotated_move import AnnotatedMove
-
-import logging
 
 
 class HeckmeckBoard(chess.Board):
