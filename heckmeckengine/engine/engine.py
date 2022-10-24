@@ -33,12 +33,10 @@ class Engine(ABC):
         if fen is None:
             fen = chess.STARTING_BOARD_FEN
 
+        self.board.reset()
         self.board.set_board_fen(fen)
-        logging.debug(fen)
 
         for move in moves:
-            logging.debug(move)
             self.board.push(move)
 
         logging.debug(self.board.fen())
-        logging.debug(self.board.turn)

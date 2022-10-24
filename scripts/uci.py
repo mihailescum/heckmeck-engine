@@ -5,7 +5,7 @@ import sys
 import logging
 import multiprocessing
 
-from heckmeckengine.engine import BasicEngine, Engine
+from heckmeckengine.engine import HeckmeckEngine, Engine
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -78,7 +78,7 @@ def search_next_move(engine: Engine, connection, *arguments):
 
 
 def run_engine(connection):
-    engine = BasicEngine()
+    engine = HeckmeckEngine()
 
     quit = False
     newgame = True
@@ -128,6 +128,7 @@ def main() -> None:
     is_computing = False
     while not quit:
         command = input()
+        logging.debug(f"UCI Recieved: {command}")
 
         while connection_to_engine.poll():
             is_computing = connection_to_engine.recv()

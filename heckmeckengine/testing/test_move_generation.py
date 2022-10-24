@@ -82,7 +82,10 @@ def perft(
     fast: bool = True,
 ) -> None:
     if fast:
-        moves = board.generate_legal_moves(pv_move=None, generate_null_move=False)
+        moves = board.generate_sorted_legal_moves(
+            pv_move=None,
+            generate_null_move=False,
+        )
         if depth == 1:
             result += np.array([len(list(moves)), 0, 0, 0, 0, 0, 0])
             return
@@ -93,7 +96,10 @@ def perft(
                 if move.is_capture:
                     result[1] += 1
             return
-        moves = board.generate_legal_moves(pv_move=None, generate_null_move=False)
+        moves = board.generate_sorted_legal_moves(
+            pv_move=None,
+            generate_null_move=False,
+        )
 
     for move in moves:
         board.push(move)

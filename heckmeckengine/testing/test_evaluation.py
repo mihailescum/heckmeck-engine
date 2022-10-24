@@ -19,28 +19,34 @@ test_cases = [
 )
 def test_get_evaluation(fen, eval_target):
     board = chess.Board(fen=fen)
-    evaluation = Evaluation(board).get(eval_target)
+    evaluation_as_white = Evaluation(board).get(eval_target, chess.WHITE)
+    evaluation_as_black = Evaluation(board).get(eval_target, chess.BLACK)
+    assert evaluation_as_white == -evaluation_as_black
 
-    mirrored = board.mirror()
-    evaluation_mirrored = Evaluation(mirrored).get(eval_target)
-
-    assert evaluation == evaluation_mirrored
+    board = board.mirror()
+    evaluation_as_white = Evaluation(board).get(eval_target, chess.WHITE)
+    evaluation_as_black = Evaluation(board).get(eval_target, chess.BLACK)
+    assert evaluation_as_white == -evaluation_as_black
 
 
 @pytest.mark.parametrize(
-    "fen, sign",
+    "fen, color, sign",
     [
-        ("8/8/4k3/8/4K3/8/8/QQQQ4 w - - 0 1", 1),
-        ("8/8/4k3/8/4K3/8/8/QQQQ4 b - - 0 1", -1),
-        ("4qqqq/8/4k3/8/4K3/8/8/8 b - - 0 1", 1),
-        ("4qqqq/8/4k3/8/4K3/8/8/8 w - - 0 1", -1),
+        ("8/8/4k3/8/4K3/8/8/QQQQ4 w - - 0 1", chess.WHITE, 1),
+        ("8/8/4k3/8/4K3/8/8/QQQQ4 w - - 0 1", chess.BLACK, -1),
+        ("8/8/4k3/8/4K3/8/8/QQQQ4 b - - 0 1", chess.WHITE, 1),
+        ("8/8/4k3/8/4K3/8/8/QQQQ4 b - - 0 1", chess.BLACK, -1),
+        ("4qqqq/8/4k3/8/4K3/8/8/8 w - - 0 1", chess.WHITE, -1),
+        ("4qqqq/8/4k3/8/4K3/8/8/8 w - - 0 1", chess.BLACK, 1),
+        ("4qqqq/8/4k3/8/4K3/8/8/8 b - - 0 1", chess.WHITE, -1),
+        ("4qqqq/8/4k3/8/4K3/8/8/8 b - - 0 1", chess.BLACK, 1),
     ],
 )
 @pytest.mark.parametrize(
     "eval_target", [EvaluationTarget.COMPLETE, EvaluationTarget.FAST]
 )
-def test_evaluation_sign(fen, sign, eval_target):
+def test_evaluation_sign(fen, color, sign, eval_target):
     board = chess.Board(fen=fen)
-    evaluation = Evaluation(board).get(eval_target)
+    evaluation = Evaluation(board).get(eval_target, color)
 
     assert sign * evaluation > 1

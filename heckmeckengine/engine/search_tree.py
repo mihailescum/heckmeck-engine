@@ -18,13 +18,14 @@ LOGGER = logging.getLogger("search_tree")
 class SearchTree:
     def __init__(
         self,
-        color: chess.Color,
         board: HeckmeckBoard,
+        color: chess.Color,
         evaluation: Evaluation,
         max_depth: int,
         start_depth: int = 2,
     ):
         self.board = board
+        self.color = color
         self.evaluation = evaluation
         self._current_depth = start_depth
         self.max_depth = max_depth
@@ -35,13 +36,14 @@ class SearchTree:
             iteration=-1,
             alpha=Score(-np.inf),
             beta=Score(np.inf),
-            sign=1 if color == chess.WHITE else -1,
+            sign=1,
         )
 
     def _alpha_beta_search(self, current_node: SearchNode) -> float:
         if current_node.max_depth == 0:
             evaluation = current_node.sign * self.evaluation.get(
                 EvaluationTarget.COMPLETE,
+                self.color,
             )
             current_node.score = evaluation
             return evaluation
@@ -69,6 +71,7 @@ class SearchTree:
         if value is None:  # Terminal node
             evaluation = current_node.sign * self.evaluation.get(
                 EvaluationTarget.COMPLETE,
+                self.color,
             )
             current_node.score = evaluation
             return evaluation

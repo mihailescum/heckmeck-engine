@@ -36,7 +36,7 @@ class SearchNode:
         pv_move = None
         if self.optimizing_node is not None:
             pv_move = self.optimizing_node.value
-        self.sorted_moves = self.board.generate_legal_moves(pv_move=pv_move)
+        self.sorted_moves = self.board.generate_sorted_legal_moves(pv_move=pv_move)
 
         if self.parent is None or self.iteration < self.parent.iteration:
             self.current_move = 0

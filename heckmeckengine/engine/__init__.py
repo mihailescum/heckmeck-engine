@@ -1,6 +1,6 @@
 from .engine import Engine
 from .random_engine import RandomEngine
-from .basic_engine import BasicEngine
+from .heckmeck_engine import HeckmeckEngine
 from .annotated_move import AnnotatedMove
 from .evaluation import Evaluation
 from .heckmeck_board import HeckmeckBoard

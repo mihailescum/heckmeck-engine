@@ -39,7 +39,7 @@ class HeckmeckBoard(chess.Board):
             chess.PAWN,
         ]
 
-    def generate_legal_moves(
+    def generate_sorted_legal_moves(
         self,
         from_mask: chess.Bitboard = chess.BB_ALL,
         to_mask: chess.Bitboard = chess.BB_ALL,
@@ -59,7 +59,7 @@ class HeckmeckBoard(chess.Board):
                     if self._is_safe(king, blockers, move):
                         yield move
             else:
-                for move in self.generate_pseudo_legal_moves(
+                for move in self.generate_sorted_pseudo_legal_moves(
                     from_mask,
                     to_mask,
                     pv_move,
@@ -68,14 +68,14 @@ class HeckmeckBoard(chess.Board):
                     if self._is_safe(king, blockers, move):
                         yield move
         else:
-            yield from self.generate_pseudo_legal_moves(
+            yield from self.generate_sorted_pseudo_legal_moves(
                 from_mask,
                 to_mask,
                 pv_move,
                 generate_null_move,
             )
 
-    def generate_pseudo_legal_moves(
+    def generate_sorted_pseudo_legal_moves(
         self,
         from_mask: chess.Bitboard = chess.BB_ALL,
         to_mask: chess.Bitboard = chess.BB_ALL,

@@ -3,7 +3,7 @@ import random
 import logging
 
 from heckmeckengine.game import Game
-from heckmeckengine.engine import BasicEngine
+from heckmeckengine.engine import HeckmeckEngine
 
 logging.basicConfig(level=logging.DEBUG)
 

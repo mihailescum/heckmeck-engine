@@ -7,13 +7,13 @@ from heckmeckengine.engine.search_tree import SearchTree
 from heckmeckengine.engine.evaluation import Evaluation, EvaluationTarget
 from heckmeckengine.engine.heckmeck_board import HeckmeckBoard
 
-LOGGER = logging.getLogger("basic_engine")
+LOGGER = logging.getLogger("heckmeck_engine")
 
 
-class BasicEngine(Engine):
+class HeckmeckEngine(Engine):
     @property
     def name(self):
-        return "Heckmeck Basic"
+        return "Heckmeck Engine"
 
     @property
     def author(self):
@@ -25,7 +25,7 @@ class BasicEngine(Engine):
 
         self.evaluation.reset_counter()
         tree = SearchTree(
-            max_depth=4,
+            max_depth=5,
             color=color,
             board=self.board,
             evaluation=self.evaluation,

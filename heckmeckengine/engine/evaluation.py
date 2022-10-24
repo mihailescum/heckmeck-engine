@@ -128,6 +128,7 @@ class Evaluation:
     def get(
         self,
         target: EvaluationTarget,
+        maximizer_color: chess.Color,
     ) -> Score:
         self.counter += 1
 
@@ -150,6 +151,8 @@ class Evaluation:
             evaluation += position_evaluation
 
         score = Score(evaluation)
+        if maximizer_color == chess.BLACK:
+            score = -score
         return score
 
     def _piece_evaluation(
@@ -158,9 +161,9 @@ class Evaluation:
         color: Optional[chess.Color] = None,
     ):
         if color is None:
-            our_eval = self._piece_evaluation(board, self.board.turn)
-            opponent_eval = self._piece_evaluation(board, not self.board.turn)
-            eval = our_eval - opponent_eval
+            white_eval = self._piece_evaluation(board, chess.WHITE)
+            black_eval = self._piece_evaluation(board, chess.BLACK)
+            eval = white_eval - black_eval
             return eval
         else:
             eval = 0
@@ -176,9 +179,9 @@ class Evaluation:
         color: Optional[chess.Color] = None,
     ) -> float:
         if color is None:
-            our_eval = self._position_evaluation(board, self.board.turn)
-            opponent_eval = self._position_evaluation(board, not self.board.turn)
-            eval = our_eval - opponent_eval
+            white_eval = self._position_evaluation(board, chess.WHITE)
+            black_eval = self._position_evaluation(board, chess.BLACK)
+            eval = white_eval - black_eval
             return eval
         else:
             position_map = (

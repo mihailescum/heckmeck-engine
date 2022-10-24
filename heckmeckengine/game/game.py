@@ -3,7 +3,7 @@ import chess
 from typing import Optional
 
 from heckmeckengine.engine import Engine
-from heckmeckengine.engine.basic_engine import BasicEngine
+from heckmeckengine.engine.heckmeck_engine import HeckmeckEngine
 
 
 class Game:
@@ -17,7 +17,7 @@ class Game:
         self.started = False
 
     def start(self, usercolor) -> None:
-        self.engine = BasicEngine(not usercolor, self.board.copy())
+        self.engine = HeckmeckEngine(not usercolor, self.board.copy())
 
         if usercolor == chess.WHITE:
             self.white_halfmove = self._user_halfmove
